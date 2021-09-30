@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iomanip>
 
-using namespace std;
+using namespace std;;
 
 struct wordRecord
 {
@@ -11,7 +11,7 @@ struct wordRecord
     int count;
 };
 
-void getCommonWords(const char *commonWordFileName, string* commonWords)
+void getCommonWords(const char *commonWordFileName, string *commonWords)
 {
     ifstream inStream;
     inStream.open(commonWordFileName);
@@ -78,6 +78,14 @@ void printNFromM(wordRecord* distinctWords, int M, int N, int totalNumWords)
     }
 }
 
+int isDuplicate(string word, wordRecord* array, int length){
+    for(int i = 0; i< length; i++){
+        if (array[i].word == word)
+            return i;
+    }
+    return -1;
+}
+
 int main(int argc, char const *argv[])
 {
     if(argc != 5){
@@ -91,11 +99,11 @@ int main(int argc, char const *argv[])
     int N = stoi(argv[4]);
     int capacity = 100;
     int timesDoubled = 0;
-    bool isDuplicate = false;
+
     string commonWords[50];
     getCommonWords(commonFilename.c_str(), commonWords);
     ifstream readFile;
-    readFile.open(readFilename.c_str());
+    readFile.open(readFilename);
     
     wordRecord *arrayPtr = new wordRecord[capacity];
     int numUniqueWords = 0;
@@ -103,64 +111,41 @@ int main(int argc, char const *argv[])
     
     while(readFile >> temp)
     {   
-        isDuplicate = false;
-        cout<< numUniqueWords;
         if(numUniqueWords == capacity)
         {
-            int oldCapacity = capacity;
-            capacity = capacity * 2;
-            wordRecord *newArray = new wordRecord[oldCapacity];
+            wordRecord *newArray = new wordRecord[capacity * 2];
             
-            for(int i = 0; i < oldCapacity; i++)
+            for(int i = 0; i < capacity; i++)
             {
                 newArray[i] = arrayPtr[i];
             }
             
             delete [] arrayPtr;
-            arrayPtr = nullptr;
-            arrayPtr = new wordRecord[capacity];
+            
+            arrayPtr = newArray;
 
-            for(int j = 0; j < oldCapacity; j++)
-            {
-                arrayPtr[j] = newArray[j];
-            }
-
-            delete [] newArray;
             newArray = nullptr;
 
+            capacity *= 2;
             timesDoubled++;
         }
         
-        if (isCommonWord(temp, commonWords)){
-            continue;
-        }else if(numUniqueWords == 0){
-            arrayPtr[numUniqueWords].word = temp;
-            arrayPtr[numUniqueWords].count++;
-            numUniqueWords++;
-            isDuplicate = true;
-        }else{
-            for(int x = 0; x < numUniqueWords; x++)
-            {
-                if(arrayPtr[x].word == temp){
-                    arrayPtr[x].count++;
-                    isDuplicate = true;
-                }
-            }
-        }
-
-        if (!isDuplicate){
-            arrayPtr[numUniqueWords].word = temp;
-            arrayPtr[numUniqueWords].count++;
-            numUniqueWords++;
-        }
-
-        if (numUniqueWords > 1)
+        if (isCommonWord(temp, commonWords))
         {
-            sortArray(arrayPtr, numUniqueWords);
+            continue;
         }
-        
+
+        if (isDuplicate(temp, arrayPtr, numUniqueWords) > -1){
+            arrayPtr[isDuplicate(temp, arrayPtr, numUniqueWords)].count++;
+        }else{
+            arrayPtr[numUniqueWords].word = temp;
+            arrayPtr[numUniqueWords].count++;
+            numUniqueWords++;
+        }
+
     }
-    
+
+    sortArray(arrayPtr, numUniqueWords);
     readFile.close();
  
     cout << "Array doubled: " << timesDoubled << endl;
@@ -170,5 +155,6 @@ int main(int argc, char const *argv[])
     cout << "---------------------------------------" << endl;
     printNFromM(arrayPtr, M, N, getTotalNumberUncommonWords(arrayPtr, numUniqueWords));
     delete [] arrayPtr;
+    arrayPtr = nullptr;
     return 0;
 }
