@@ -37,20 +37,22 @@ void Maze::addEdge(int v1, int v2){
 void Maze::addVertex(int num){
     bool found = false;
     for(int i = 0; i < vertices.size(); i++){
-        if(vertices[i]->num == n){
+        if(vertices[i]->num == num){
             found = true;
         }
     }
     if(found == false){
         vertex * v = new vertex;
-        v->num = n;
+        v->num = num;
         vertices.push_back(v);
     }
 }
 
 void Maze::displayEdges(){
+    cout << endl<<"Adjacency List Graph:" << endl;
+    
     for(int i = 0; i < vertices.size(); i++){
-        cout << vertices[i] << " --> ";
+        cout << vertices[i]->num << " --> ";
         for(int x = 0; x < vertices[i]->adj.size(); x++){
             cout << vertices[i]->adj[x].v->num << " ";
         }
@@ -65,14 +67,16 @@ int Maze::findVertexNumFromPosition(int x, int y){
 // Creates a default maze of all 1s of size n x n, except for positions (0,0) and (n-1, n-1)
 void Maze::createDefaultMaze(){
     
+    maze = new int*[n];
     for(int i = 0; i < n; i++){
-        int *x = new int[n];
+        maze[i] = new int[n];
         for(int j = 0; j < n; j++){
-            x[j] = 1;
+            maze[i][j] = 1;
         }
-        maze[i] = x;
     }
-
+    
+    maze[0][0] = 0;
+    maze[n - 1][n-1] = 0;
 }
 
 void Maze::createPath(int i, int j){
@@ -80,15 +84,17 @@ void Maze::createPath(int i, int j){
 }
 
 void Maze::printMaze(){
+
+    cout<< "Maze of size (" <<n << "x" << n << ")" << endl;
     if (n > 0){
         for(int x = 0; x < n; x++){
             for(int i = 0; i < n; i++){
                 if(i == 0){
-                   cout << "| " << maze[i]; 
+                   cout << "| " << maze[x][i]; 
                 }else if(i == n-1){
-                    cout << " | " << maze[i] << " |";
+                    cout << " | " << maze[x][i] << " |";
                 }else{
-                    cout << " | " << maze[i]; 
+                    cout << " | " << maze[x][i]; 
                 }
             }
             cout << endl;
@@ -141,23 +147,69 @@ void Maze::convertMazeToAdjacencyListGraph(){
     }
 }
 
-bool Maze::findPathThroughMaze(){
+bool depthFirstTraversal(vertex* v, int n, vector<int>& path){
+    cout << "Reached vertex: " << v->num << endl; 
+    v->visited = true;
 
+    if(v->num == ((n*n)-1))
+    {
+        return true;
+    }
+
+    for(int i = 0; i < v->adj.size(); i++){
+        if(v->adj[i].v->visited != true){
+            path.push_back(v->adj[i].v->num);
+
+            if(depthFirstTraversal(v->adj[i].v, n, path) == true){
+                return true;
+            }
+            cout << "Backtracked to vertex: " << v->num << endl;
+            path.pop_back();
+        }
+    }
+    return false;
+}
+
+bool Maze::findPathThroughMaze(){
+    cout << "Starting at vertex: 0" << endl; 
+    path.push_back(0);
+
+    if(depthFirstTraversal(vertices[0], n, path) == false){
+        return false;
+    }
     
-    return false; 
+    return checkIfValidPath();
 }
 
 
+
 bool Maze::checkIfValidPath(){
-    if(path[0] = 0 && path[path.size()-1] == (n^2-1)){
+
+    if(path[0] == 0 && path[path.size()-1] == (n*n-1)){
         for(int i = 0; i < path.size()-1; i++){
-            for(int i = 0; i < path[i].adj)
-            if(path[i+1] != path[i].adj){
+            int row = path[i] / n;
+            int col = path[i] % n;
+            bool valid = false;
+            vector<int> openAdjNodes = findOpenAdjacentPaths(row, col); 
+
+            for(int j = 0; j < openAdjNodes.size(); j++){
+                if(path[i + 1] == openAdjNodes[j]){
+                    valid = true;
+                }
+            }
+            
+            if(!valid){
+                
                 return false;
+                
             }
         }
+        return true;
+    }else{
+
+        return false;
     }
-    return false; 
+    
 }
 
 Maze::~Maze(){
